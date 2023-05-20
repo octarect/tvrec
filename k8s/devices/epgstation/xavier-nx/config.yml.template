@@ -1,0 +1,130 @@
+# vi: ft=yaml
+port: 80
+mirakurunPath: http://mirakc.tvrec.svc.cluster.local
+
+dbtype: mysql
+mysql:
+  host: mariadb.tvrec.svc.cluster.local
+  port: 3306
+  user: $MARIADB_USER
+  password: $MARIADB_PASSWORD
+  database: $MARIADB_DATABASE
+  charset: utf8mb4
+
+needToReplaceEnclosingCharacters: true
+
+epgUpdateIntervalTime: 10
+
+conflictPriority: 1
+recPriority: 2
+
+recordedFormat: '%YEAR%-%MONTH%-%DAY%T%HOUR%:%MIN%:%SEC%_%TITLE%'
+recordedFileExtension: .m2ts
+recorded:
+  - name: recorded
+    path: '%ROOT%/recorded'
+
+thumbnail: '%ROOT%/thumbnail'
+thumbnailSize: 480x270
+thumbnailPosition: 5
+
+ffmpeg: /usr/local/bin/ffmpeg
+ffprobe: /usr/local/bin/ffprobe
+
+encodeProcessNum: 4
+concurrentEncodeNum: 1
+encode:
+  - name: h264
+    cmd: '%NODE% %ROOT%/config/enc.js h264_nvmpi 1280x780 16:9 1500k'
+    suffix: .mp4
+    rate: 4.0
+  - name: h265
+    cmd: '%NODE% %ROOT%/config/enc.js hevc_nvmpi 1280x780 16:9 1500k'
+    suffix: .h265.mp4
+    rate: 4.0
+
+urlscheme:
+  m2ts:
+    ios: vlc-x-callback://x-callback-url/stream?url=PROTOCOL://ADDRESS
+    android: intent://ADDRESS#Intent;package=org.videolan.vlc;type=video;scheme=PROTOCOL;end
+  video:
+    ios: infuse://x-callback-url/play?url=PROTOCOL://ADDRESS
+    android: intent://ADDRESS#Intent;package=com.mxtech.videoplayer.ad;type=video;scheme=PROTOCOL;end
+  download:
+    ios: vlc-x-callback://x-callback-url/download?url=PROTOCOL://ADDRESS&filename=FILENAME
+    android: intent://ADDRESS#Intent;package=com.dv.adm;type=video;scheme=PROTOCOL;end
+
+stream:
+  live:
+    ts:
+      m2ts:
+        - name: 無変換
+
+      m2tsll:
+        - name: 720p
+          cmd:
+            '%FFMPEG% -dual_mono_mode main -ignore_unknown -threads 0
+            -f mpegts -analyzeduration 500000 -i pipe:0
+            -fflags nobuffer -flags low_delay -max_delay 250000 -max_interleave_delta 1
+            -map 0:s? -c:s copy -map 0:d? -c:d copy
+            -map 0:v:0 -c:v h264_nvmpi -s 1280x780 -aspect 16:9 -b:v 1500k -flags +cgop
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 192k -ac 2
+            -y -f mpegts pipe:1'
+
+        - name: 480p
+          cmd:
+            '%FFMPEG% -dual_mono_mode main -ignore_unknown -threads 0
+            -f mpegts -analyzeduration 500000 -i pipe:0
+            -fflags nobuffer -flags low_delay -max_delay 250000 -max_interleave_delta 1
+            -map 0:s? -c:s copy -map 0:d? -c:d copy
+            -map 0:v:0 -c:v h264_nvmpi -vf yadif,scale=-2:480 -b:v 1000k -flags +cgop
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 128k -ac 2
+            -y -f mpegts pipe:1'
+
+      webm: []
+      mp4: []
+      hls:
+        - name: 720p
+          cmd:
+            '%FFMPEG% -re -dual_mono_mode main -sn -ignore_unknown -threads 0 -i pipe:0
+            -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+            -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments
+            -map 0:v:0 -c:v h264_nvmpi -vf yadif,scale=-2:720 -b:v 1500k
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 192k -ac 2
+            -flags +loop-global_header %OUTPUT%'
+
+        - name: 480p
+          cmd:
+            '%FFMPEG% -re -dual_mono_mode main -sn -ignore_unknown -threads 0 -i pipe:0
+            -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+            -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments
+            -map 0:v:0 -c:v h264_nvmpi -vf yadif,scale=-2:480 -b:v 1000k
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 128k -ac 2
+            -flags +loop-global_header %OUTPUT%'
+
+  recorded:
+    ts:
+      webm: []
+      mp4: []
+      hls:
+        - name: 720p
+          cmd:
+            '%FFMPEG% -re -dual_mono_mode main -sn -ignore_unknown -threads 0 -i pipe:0
+            -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+            -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments
+            -map 0:v:0 -c:v h264_nvmpi -vf yadif,scale=-2:720 -b:v 1500k
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 192k -ac 2
+            -flags +loop-global_header %OUTPUT%'
+
+        - name: 480p
+          cmd:
+            '%FFMPEG% -re -dual_mono_mode main -sn -ignore_unknown -threads 0 -i pipe:0
+            -max_muxing_queue_size 1024 -f hls -hls_time 3 -hls_list_size 17 -hls_allow_cache 1
+            -hls_segment_filename %streamFileDir%/stream%streamNum%-%09d.ts -hls_flags delete_segments
+            -map 0:v:0 -c:v h264_nvmpi -vf yadif,scale=-2:480 -b:v 1000k
+            -map 0:a:0 -c:a aac -ar 48000 -b:a 128k -ac 2
+            -flags +loop-global_header %OUTPUT%'
+    encoded:
+      webm: []
+      mp4: []
+      hls: []

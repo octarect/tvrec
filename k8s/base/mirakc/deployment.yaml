@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mirakc
+  name: mirakc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mirakc
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mirakc
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - "pcscd && mkdir -p /var/lib/mirakc/epg && mirakc"
+        env:
+        - name: MIRAKC_CONFIG
+          value: /etc/mirakc/config.yml
+        - name: RUST_LOG
+          value: info,mirakc=debug
+        - name: MIRAKC_DEBUG_CHILD_PROCESS
+          value: "1"
+        - name: MIRAKC_ARIB_LOG
+          value: warn,filter-program=info
+        - name: MIRAKC_ARIB_LOG_NO_TIMESTAMP
+          value: "1"
+        image: REPLACE_HERE
+        imagePullPolicy: IfNotPresent
+        name: mirakc
+        ports:
+        - containerPort: 40772
+          name: http
+          protocol: TCP
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /dev/bus/usb
+          name: usb-devices
+          readOnly: true
+        - mountPath: /dev/dvb
+          name: dvb-devices
+          readOnly: true
+        # NOTE: Required to set
+        - mountPath: /etc/mirakc/config.yml
+          name: mirakc-config
+          readOnly: true
+          subPath: config.yml
+        - mountPath: /var/lib/mirakc
+          name: mirakc-data
+      nodeSelector:
+        hasTuner: "true"
+      volumes:
+      - name: usb-devices
+        hostPath:
+          path: /dev/bus/usb
+      - name: dvb-devices
+        hostPath:
+          path: /dev/dvb
+      - name: mirakc-config
+        configMap:
+          name: mirakc-config
+      - name: mirakc-data
+        hostPath:
+          path: /var/lib/tvrec/mirakc
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always

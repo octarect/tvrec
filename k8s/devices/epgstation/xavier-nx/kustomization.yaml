@@ -1,0 +1,8 @@
+resources:
+  - ../../../base/epgstation
+configMapGenerator:
+  - name: epgstation-config
+    files:
+      - config.yml.template
+      - enc.js
+    behavior: merge

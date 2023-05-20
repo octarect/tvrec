@@ -1,0 +1,11 @@
+resources:
+  - statefulset.yaml
+  - service.yaml
+  - ingress.yaml
+
+configMapGenerator:
+- name: epgstation-config
+  files:
+  - config/epgUpdaterLogConfig.yml
+  - config/operatorLogConfig.yml
+  - config/serviceLogConfig.yml

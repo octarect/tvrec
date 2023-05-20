@@ -1,0 +1,76 @@
+namespace: tvrec
+resources:
+  - ../../base/mariadb
+  - ../../devices/mirakc/px-q1ud
+  - ../../devices/epgstation/xavier-nx
+
+patches:
+  - target:
+      kind: Deployment
+      name: mirakc
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/octarect/mirakc:2.1.0
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: Asia/Tokyo
+  - target:
+      kind: StatefulSet
+      name: epgstation
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/octarect/epgstation:v2.6.2-ff60-xavier-nx
+      - op: add
+        path: /spec/volumeClaimTemplates/-
+        value:
+          metadata:
+            name: epgstation-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 256Gi
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: Asia/Tokyo
+  - target:
+      kind: Ingress
+      name: epgstation
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: tvrec.example.com
+      - op: replace
+        path: /spec/rules/0/http/paths/0/backend/service/port/number
+        value: 443
+      - op: add
+        path: /spec/tls/-
+        value:
+          hosts:
+          - tvrec.example.com
+          secretName: example-tls
+  - target:
+      kind: StatefulSet
+      name: mariadb
+    patch: |-
+      - op: add
+        path: /spec/volumeClaimTemplates/-
+        value:
+          metadata:
+            name: mariadb-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 1Gi
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: Asia/Tokyo

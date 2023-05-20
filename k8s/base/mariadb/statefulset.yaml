@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: mariadb
+  name: mariadb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+  serviceName: mariadb
+  template:
+    metadata:
+      labels:
+        app: mariadb
+    spec:
+      containers:
+      - args:
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        - --performance-schema=false
+        - --expire_logs_days=7
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-root-password
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-password
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-user
+        - name: MARIADB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-database
+        image: mariadb:10.11.2
+        name: mariadb
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: mariadb-data
+  # NOTE: Required to set
+  volumeClaimTemplates: []

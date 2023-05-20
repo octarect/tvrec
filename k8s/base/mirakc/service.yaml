@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mirakc
+  name: mirakc
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 40772
+  selector:
+    app: mirakc
+  type: ClusterIP

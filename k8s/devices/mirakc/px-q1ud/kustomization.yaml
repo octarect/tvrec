@@ -1,0 +1,6 @@
+resources:
+  - ../../../base/mirakc
+configMapGenerator:
+  - name: mirakc-config
+    files:
+      - config.yml

@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: epgstation
+  name: epgstation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: epgstation
+  serviceName: epgstation
+  template:
+    metadata:
+      labels:
+        app: epgstation
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - "-c"
+        - |
+          cat /app/config/config.yml.template | \
+            sed -e "s/\$MARIADB_PASSWORD/$MARIADB_PASSWORD/" | \
+            sed -e "s/\$MARIADB_USER/$MARIADB_USER/" | \
+            sed -e "s/\$MARIADB_DATABASE/$MARIADB_DATABASE/" > /app/config/config.yml
+          npm start
+        env:
+        - name: MARIADB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-password
+        - name: MARIADB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-user
+        - name: MARIADB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: mariadb-secret
+              key: mariadb-database
+        envFrom:
+        - secretRef:
+            name: mariadb-secret
+        image: REPLACE_HERE
+        name: epgstation
+        ports:
+        - containerPort: 80
+          name: http-ws
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /app/config/epgUpdaterLogConfig.yml
+          name: epgstation-config
+          subPath: epgUpdaterLogConfig.yml
+        - mountPath: /app/config/operatorLogConfig.yml
+          name: epgstation-config
+          subPath: operatorLogConfig.yml
+        - mountPath: /app/config/serviceLogConfig.yml
+          name: epgstation-config
+          subPath: serviceLogConfig.yml
+        - mountPath: /app/data
+          name: epgstation-data
+          subPath: data
+        - mountPath: /app/thumbnail
+          name: epgstation-data
+          subPath: thumbnail
+        - mountPath: /app/logs
+          name: epgstation-data
+          subPath: logs
+        - mountPath: /app/recorded
+          name: epgstation-data
+          subPath: recorded
+        # NOTE: Required to set
+        - mountPath: /app/config/enc.js
+          name: epgstation-config
+          subPath: enc.js
+        # NOTE: Required to set
+        - mountPath: /app/config/config.yml.template
+          name: epgstation-config
+          subPath: config.yml.template
+      restartPolicy: Always
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+      volumes:
+      - name: epgstation-config
+        configMap:
+          name: epgstation-config
+  # NOTE: Required to set
+  volumeClaimTemplates: []
