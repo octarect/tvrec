@@ -86,6 +86,16 @@ Finally, you can generate an overlay for your environment by running the followi
 make new-overlay OVERLAY_NAME=mytvrec
 ```
 
+### Create a secret for mariadb
+
+```bash
+NAMESPACE=tvrec
+MYSQL_ROOT_PASSWORD="$(cat /dev/urandom | head -c 16 | tr -d "\n" | base64)" # or any password of your choice.
+MYSQL_PASSWORD="$(cat /dev/urandom | head -c 16 | tr -d "\n" | base64)" # same as above
+
+kubectl create -n $NAMESPACE secret generic mariadb-secret --from-literal=MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD --from-literal=MYSQL_PASSWORD=$MYSQL_PASSWORD
+```
+
 ### Deploy
 
 Run the following command to deploy tvrec;
