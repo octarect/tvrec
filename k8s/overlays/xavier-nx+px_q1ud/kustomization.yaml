@@ -25,16 +25,6 @@ patches:
         path: /spec/template/spec/containers/0/image
         value: ghcr.io/octarect/epgstation:v2.6.2-ff60-xavier-nx
       - op: add
-        path: /spec/volumeClaimTemplates/-
-        value:
-          metadata:
-            name: epgstation-data
-          spec:
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 256Gi
-      - op: add
         path: /spec/template/spec/containers/0/env/-
         value:
           name: TZ
@@ -59,16 +49,6 @@ patches:
       kind: StatefulSet
       name: mariadb
     patch: |-
-      - op: add
-        path: /spec/volumeClaimTemplates/-
-        value:
-          metadata:
-            name: mariadb-data
-          spec:
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 1Gi
       - op: add
         path: /spec/template/spec/containers/0/env/-
         value:

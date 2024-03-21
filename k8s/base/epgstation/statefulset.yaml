@@ -89,5 +89,6 @@ spec:
       - name: epgstation-config
         configMap:
           name: epgstation-config
-  # NOTE: Required to set
-  volumeClaimTemplates: []
+      - name: epgstation-data
+        persistentVolumeClaim:
+          claimName: epgstation-data
