@@ -1,6 +1,5 @@
 FROM nvcr.io/nvidia/l4t-base:r35.1.0 AS common-base
-RUN set -x \
- && apt-get update \
+RUN apt-get update \
  && apt-get install -y git curl npm \
  && curl -sL https://deb.nodesource.com/setup_16.x | bash - \
  && apt-get install -y nodejs \
@@ -8,16 +7,14 @@ RUN set -x \
 
 FROM common-base AS client-builder
 WORKDIR /app/client
-RUN set -x \
- && npm install --no-save --log-level=info \
+RUN npm install --no-save --log-level=info \
  && npm run build --loglevel=info
 
 FROM common-base AS server-builder
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DOCKER="YES"
 WORKDIR /app
-RUN set -x \
- && apt-get install -y build-essential python3 \
+RUN apt-get install -y build-essential python3 \
  && npm install --no-save --loglevel=info \
  && rm -rf client \
  && npm run build-server --loglevel=info
@@ -26,11 +23,9 @@ FROM common-base
 WORKDIR /opt
 ENV DEV="autoconf automake build-essential cmake libaom-dev libass-dev libfreetype6-dev libgnutls28-dev libmp3lame-dev libtool libunistring-dev libvorbis-dev meson ninja-build pkg-config texinfo wget yasm zlib1g-dev"
 
-RUN set -x \
- && apt-get install -y $DEV
+RUN apt-get install -y $DEV
 
-RUN set -x \
- && git clone https://github.com/KeyLost/jetson-ffmpeg.git \
+RUN git clone https://github.com/KeyLost/jetson-ffmpeg.git \
  && cd jetson-ffmpeg \
  && mkdir build \
  && cd build \
@@ -40,8 +35,7 @@ RUN set -x \
  && make install \
  && ldconfig
 
-RUN set -x \
- && git clone git://source.ffmpeg.org/ffmpeg.git -b release/6.0 --depth=1 \
+RUN git clone git://source.ffmpeg.org/ffmpeg.git -b release/6.0 --depth=1 \
  && cd ffmpeg \
  && wget -O ffmpeg_nvmpi.patch https://github.com/Keylost/jetson-ffmpeg/raw/master/ffmpeg_patches/ffmpeg6.0_nvmpi.patch \
  && git apply ffmpeg_nvmpi.patch \
@@ -49,8 +43,7 @@ RUN set -x \
  && make \
  && make install
 
-RUN set -x \
- && apt-get -y remove $DEV \
+RUN apt-get -y remove $DEV \
  && apt-get autoremove -y \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* \
