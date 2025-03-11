@@ -1,0 +1,82 @@
+namespace: {{ namespace }}
+resources:
+  - ../../base/mariadb
+  - ../../devices/mirakc/{{ tuner }}
+  - ../../devices/epgstation/{{ gpu }}
+
+patches:
+  - target:
+      kind: Deployment
+      name: mirakc
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: {{ mirakc.image }}
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: {{ timezone }}
+  - target:
+      kind: StatefulSet
+      name: epgstation
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: {{ epgstation.image }}
+      {%- if epgstation.volume_size %}
+      - op: add
+        path: /spec/volumeClaimTemplates/-
+        value:
+          metadata:
+            name: epgstation-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: {{ epgstation.volume_size }}
+      {%- endif %}
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: {{ timezone }}
+  - target:
+      kind: Ingress
+      name: epgstation
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: {{ epgstation.domain }}
+      {%- if epgstation.tls and epgstation.tls.enabled %}
+      - op: replace
+        path: /spec/rules/0/http/paths/0/backend/service/port/number
+        value: 443
+      - op: add
+        path: /spec/tls/-
+        value:
+          hosts:
+          - {{ epgstation.domain }}
+          secretName: {{ epgstation.tls.secret_name }}
+      {%- endif %}
+  - target:
+      kind: StatefulSet
+      name: mariadb
+    patch: |-
+      {%- if epgstation.volume_size %}
+      - op: add
+        path: /spec/volumeClaimTemplates/-
+        value:
+          metadata:
+            name: mariadb-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: {{ mariadb.volume_size }}
+      {%- endif %}
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: TZ
+          value: {{ timezone }}

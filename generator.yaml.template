@@ -1,0 +1,29 @@
+# vi: ft=yaml
+
+# K8s Namespace to deploy tvrec
+namespace: tvrec
+
+# The tuner connected to your node. (directory name in `k8s/devices/mirakc`)
+tuner: px-q1ud
+# GPU or SBC name (direcotry name in `k8s/devices/epgstation`)
+gpu: xavier-nx
+
+epgstation:
+  image: ghcr.io/octarect/epgstation:v2.7.3-ff60-l4t35.1.0
+  # EPGStation volume size (Sufficient capacity to store video files)
+  # Optional: size of pvc. If you use your own pvc, comment out the following line.
+  volume_size: 128Gi
+  # Domain name used by ingress
+  domain: tvrec.example.com
+  tls:
+    enabled: false
+    secret_name: example-com-tls
+
+mariadb:
+  # Optional: size of pvc. If you use your own pvc, comment out the following line.
+  volume_size: 8Gi
+
+mirakc:
+  image: ghcr.io/octarect/mirakc:v3.4.6
+
+timezone: Asia/Tokyo
