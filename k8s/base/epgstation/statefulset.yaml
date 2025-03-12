@@ -50,6 +50,9 @@ spec:
         - containerPort: 80
           name: http-ws
           protocol: TCP
+        resources:
+          limits:
+            nvidia.com/gpu: 1 # requesting 1 GPU
         volumeMounts:
         - mountPath: /app/config/epgUpdaterLogConfig.yml
           name: epgstation-config
