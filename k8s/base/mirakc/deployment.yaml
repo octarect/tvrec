@@ -16,6 +16,13 @@ spec:
       labels:
         app: mirakc
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: tuner
+                operator: Exists
       containers:
       - command:
         - sh
@@ -55,8 +62,6 @@ spec:
           subPath: config.yml
         - mountPath: /var/lib/mirakc
           name: mirakc-data
-      nodeSelector:
-        hasTuner: "true"
       volumes:
       - name: usb-devices
         hostPath:
